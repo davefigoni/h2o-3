@@ -105,6 +105,7 @@ public class TCPReceiverThread extends Thread {
           case exec:     RPC.remote_exec  (_ab); break;
           case ack:      RPC.tcp_ack      (_ab); break;
           case timeline: TimeLine.tcp_call(_ab); break;
+          case frame_create: new ExternalFrameHandler().process(_ab); break;
           default: throw new RuntimeException("Unknown TCP Type: " + ctrl+" "+_ab._h2o);
           }
         } catch( java.nio.channels.AsynchronousCloseException ex ) {
