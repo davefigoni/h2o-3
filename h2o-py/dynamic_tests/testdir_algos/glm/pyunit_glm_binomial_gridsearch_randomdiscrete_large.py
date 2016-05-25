@@ -54,11 +54,11 @@ class Test_glm_random_grid_search:
 
     max_int_val = 1000          # maximum size of random integer values
     min_int_val = 0             # minimum size of random integer values
-    max_int_number = 4          # maximum number of integer random grid values to generate
+    max_int_number = 3          # maximum number of integer random grid values to generate
 
     max_real_val = 1            # maximum size of random float values
     min_real_val = 0.0          # minimum size of random float values
-    max_real_number = 4         # maximum number of real grid values to generate
+    max_real_number = 3         # maximum number of real grid values to generate
 
     lambda_scale = 100          # scale lambda value to be from 0 to 100 instead of 0 to 1
     max_runtime_scale = 3       # scale the max runtime to be different from 0 to 1
@@ -72,7 +72,7 @@ class Test_glm_random_grid_search:
     allowed_scaled_time = 1       # scale back time
     allowed_scaled_model_number = 1.5   # used to set max_model_number as
     # possible_number_models * allowed_scaled_model_number
-    max_stopping_rounds = 10            # maximum stopping rounds allowed to be used for early stopping metric
+    max_stopping_rounds = 5            # maximum stopping rounds allowed to be used for early stopping metric
     max_tolerance = 0.01                # maximum tolerance to be used for early stopping metric
 
     family = 'binomial'     # set gaussian as default
