@@ -89,11 +89,11 @@ class Test_glm_grid_search:
     # following parameters are used to generate hyper-parameters
     max_int_val = 10            # maximum size of random integer values
     min_int_val = -10           # minimum size of random integer values
-    max_int_number = 4          # maximum number of integer random grid values to generate
+    max_int_number = 3          # maximum number of integer random grid values to generate
 
     max_real_val = 1            # maximum size of random float values
     min_real_val = -0.1           # minimum size of random float values
-    max_real_number = 4         # maximum number of real grid values to generate
+    max_real_number = 3         # maximum number of real grid values to generate
 
     lambda_scale = 50           # scale the lambda values to be higher than 0 to 1
     alpha_scale = 1.2           # scale alpha into bad ranges
