@@ -21,14 +21,14 @@ class Test_glrm_grid_search:
     here.
 
     Test Descriptions:
-    test_glrm_grid_search_over_params performs the following:
         a. grab all truely griddable parameters and randomly or manually set the parameter values.
         b. Next, build H2O GLRM models using grid search.  Count and make sure models
            are only built for hyper-parameters set to legal values.  No model is built for bad hyper-parameters
            values.  We should instead get a warning/error message printed out.
         c. For each model built using grid search, we will extract the parameters used in building
-           that model and manually build a H2O GLRM model.  Objectives are calculated
-           to compare the performance of grid search model and our manually built model.
+           that model and manually build a H2O GLRM model.  Training metrics are calculated from the
+           gridsearch model and the manually built model.  If their metrics
+           differ by too much, print a warning message but don't fail the test.
         d. we will check and make sure the models are built within the max_runtime_secs time limit that was set
            for it as well.  If max_runtime_secs was exceeded, declare test failure as well.
 
@@ -89,7 +89,6 @@ class Test_glrm_grid_search:
     # give the user opportunity to pre-assign hyper parameters for fixed values
     hyper_params = dict()
     hyper_params["transform"] = ["NONE", "DEMEAN", "DESCALE", "STANDARDIZE", "NORMALIZE"]
-#hyper_params["fold_assignment"] = ["AUTO", "Random", "Modulo", 'Stratified']# add back when cross-validation is enabled
     hyper_params["loss"] = ["Quadratic", "Absolute", "Huber", "Hinge", "Logistic"]  # Poisson for positive elements only
     hyper_params["regularization_x"] = ["None", "Quadratic", "L2", "L1", "NonNegative", "OneSparse",
                                         "UnitOneSparse", "Simplex"]
@@ -219,15 +218,15 @@ class Test_glrm_grid_search:
     def test_glrm_grid_search_over_params(self):
         """
         test_glrm_grid_search_over_params performs the following:
-        a. grab all truely griddable parameters and randomly or manually set the parameter values.
-        b. Next, build H2O GLRM models using grid search.  Count and make sure models
+        a. build H2O GLRM models using grid search.  Count and make sure models
            are only built for hyper-parameters set to legal values.  No model is built for bad hyper-parameters
            values.  We should instead get a warning/error message printed out.
-        c. For each model built using grid search, we will extract the parameters used in building
-           that model and manually build a H2O GLRM model.  Objectives are calculated
-           to compare the performance of grid search model and our manually built model.
-        d. we will check and make sure the models are built within the max_runtime_secs time limit that was set
-           for it as well.  If max_runtime_secs was exceeded, declare test failure as well.
+        b. For each model built using grid search, we will extract the parameters used in building
+           that model and manually build a H2O GLRM model.  Training metrics are calculated from the
+           gridsearch model and the manually built model.  If their metrics
+           differ by too much, print a warning message but don't fail the test.
+        c. we will check and make sure the models are built within the max_runtime_secs time limit that was set
+           for it as well.  If max_runtime_secs was exceeded, declare test failure.
         """
 
         print("*******************************************************************************************")
@@ -293,14 +292,14 @@ class Test_glrm_grid_search:
                     true_run_time_limits += max_runtime
 
                     # compute and compare test metrics between the two models
-                    test_grid_model_metrics = each_model._model_json['output']['objective']
-                    test_manual_model_metrics = manual_model._model_json['output']['objective']
+                    grid_model_metrics = each_model._model_json['output']['objective']
+                    manual_model_metrics = manual_model._model_json['output']['objective']
 
                     # just compare the mse in this case within tolerance:
-                    if abs(test_grid_model_metrics - test_manual_model_metrics) > self.allowed_diff:
+                    if abs(grid_model_metrics - manual_model_metrics)/grid_model_metrics > self.allowed_diff:
                         print("test_glrm_grid_search_over_params for GLRM warning: grid search model mdetric ({0}) and "
                               "manually built H2O model metric ({1}) differ too much"
-                              "!".format(test_grid_model_metrics, test_manual_model_metrics))
+                              "!".format(grid_model_metrics, manual_model_metrics))
 
                 total_run_time_limits = max(total_run_time_limits, true_run_time_limits) * (1+self.extra_time_fraction)
 

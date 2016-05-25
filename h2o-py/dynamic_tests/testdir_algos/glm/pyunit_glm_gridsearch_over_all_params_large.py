@@ -4,7 +4,6 @@ import sys
 import random
 import os
 import numpy as np
-import math
 from builtins import range
 import time
 import json
@@ -39,11 +38,11 @@ class Test_glm_grid_search:
            are only built for hyper-parameters set to legal values.  No model is built for bad hyper-parameters
            values.  We should instead get a warning/error message printed out.
         c. For each model built using grid search, we will extract the parameters used in building
-           that model and manually build a H2O GLM model.  MSEs are calculated from a test set
-           to compare the performance of grid search model and our manually built model.  If their MSEs
-           are close, declare test success.  Otherwise, declare test failure.
+           that model and manually build a H2O GLM model.  Training metrics are calculated from the
+           gridsearch model and the manually built model.  If their metrics
+           differ by too much, print a warning message but don't fail the test.
         d. we will check and make sure the models are built within the max_runtime_secs time limit that was set
-           for it as well.  If max_runtime_secs was exceeded, declare test failure as well.
+           for it as well.  If max_runtime_secs was exceeded, declare test failure.
 
     test2_illegal_name_value: test for condition 1 and 2.  Randomly go into the hyper_parameters that we
     have specified, either
@@ -153,28 +152,15 @@ class Test_glm_grid_search:
     def setup_data(self):
         """
         This function performs all initializations necessary:
-        1. generates all the random parameter values for our dynamic tests like the Gaussian
-        noise std, column count and row count for training/test data sets.
-        2. randomly choose the distribution family (gaussian, binomial, multinomial)
-        to test.
-        3. with the chosen distribution family, generate the appropriate data sets
-        4. load the data sets and set the training set indices and response column index
+        1. Randomly choose which distribution family to use
+        2. load the correct data sets and set the training set indices and response column index
         """
 
         # create and clean out the sandbox directory first
         self.sandbox_dir = pyunit_utils.make_Rsandbox_dir(self.current_dir, self.test_name, True)
 
-        # randomly determine data set size in terms of column and row counts
-
-        #  DEBUGGING setup_data, remember to comment them out once done.
-        # self.max_real_number = 3
-        # self.max_int_number = 3
-        # end DEBUGGING
-
         # randomly choose which family of GLM algo to use
         self.family = self.families[random.randint(0, len(self.families)-1)]
-
-        self.family = 'gaussian'
 
         # set class number for classification
         if 'binomial' in self.family:
@@ -327,11 +313,11 @@ class Test_glm_grid_search:
            are only built for hyper-parameters set to legal values.  No model is built for bad hyper-parameters
            values.  We should instead get a warning/error message printed out.
         c. For each model built using grid search, we will extract the parameters used in building
-           that model and manually build a H2O GLM model.  MSEs are calculated from a test set
-           to compare the performance of grid search model and our manually built model.  If their MSEs
-           are close, declare test success.  Otherwise, declare test failure.
+           that model and manually build a H2O GLM model.  Training metrics are calculated from the
+           gridsearch model and the manually built model.  If their metrics
+           differ by too much, print a warning message but don't fail the test.
         d. we will check and make sure the models are built within the max_runtime_secs time limit that was set
-           for it as well.  If max_runtime_secs was exceeded, declare test failure as well.
+           for it as well.  If max_runtime_secs was exceeded, declare test failure.
         """
 
         print("*******************************************************************************************")
@@ -355,7 +341,6 @@ class Test_glm_grid_search:
                 print("test_glm_search_over_params for GLM failed: number of models built by gridsearch "
                       "does not equal to all possible combinations of hyper-parameters")
             else:
-
                 # add parameters into params_dict.  Use this to manually build model
                 params_dict = dict()
                 params_dict["family"] = self.family
@@ -368,8 +353,6 @@ class Test_glm_grid_search:
                 for each_model in grid_model:
 
                     # grab parameters used by grid search and build a dict out of it
-                    # params_list = pyunit_utils.extract_used_params_xval(each_model, self.hyper_params_bad.keys(),
-                    #                                                     each_model.params, params_dict)
                     params_list = grid_model.get_hyperparams_dict(each_model._id)
                     params_list.update(params_dict)
 
@@ -406,16 +389,15 @@ class Test_glm_grid_search:
                     true_run_time_limits += max_runtime
 
                     # compute and compare test metrics between the two models
-                    test_grid_model_metrics = each_model.model_performance(test_data=self.training2_data)
-                    test_manual_model_metrics = manual_model.model_performance(test_data=self.training2_data)
+                    grid_model_metrics = each_model.model_performance(test_data=self.training2_data)
+                    manual_model_metrics = manual_model.model_performance(test_data=self.training2_data)
 
                 # just compare the mse in this case within tolerance:
-                if abs(test_grid_model_metrics.mse() - test_manual_model_metrics.mse()) > self.allowed_diff:
-#                    self.test_failed += 1             # count total number of tests that have failed
-#                    self.test_failed_array[self.test_num] += 1
+                if abs(grid_model_metrics.mse() - manual_model_metrics.mse())/grid_model_metrics.mse()\
+                        > self.allowed_diff:
                     print("test1_glm_grid_search_over_params for GLM warning: grid search model metric ({0}) and "
                           "manually built H2O model metric ({1}) differ too much"
-                          "!".format(test_grid_model_metrics.mse(), test_manual_model_metrics.mse()))
+                          "!".format(grid_model_metrics.mse(), manual_model_metrics.mse()))
 
                 total_run_time_limits = max(total_run_time_limits, true_run_time_limits) * (1+self.extra_time_fraction)
 
@@ -427,8 +409,7 @@ class Test_glm_grid_search:
                     "does not equal to all possible combinations of hyper-parameters")
 
             # make sure the max_runtime_secs is working to restrict model built time
-            if not((total_gridsearch_runtime <= total_run_time_limits) and
-                       (manual_run_runtime <= total_run_time_limits)):
+            if not(manual_run_runtime <= total_run_time_limits):
                 self.test_failed += 1
                 self.test_failed_array[self.test_num] = 1
                 print("test1_glm_grid_search_over_params for GLM failed: number of models built by gridsearch "

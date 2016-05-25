@@ -3,8 +3,6 @@ from __future__ import print_function
 import sys
 import random
 import os
-import numpy as np
-import math
 from builtins import range
 import time
 import json
@@ -13,9 +11,9 @@ sys.path.insert(1, "../../../")
 
 import h2o
 from tests import pyunit_utils
-from random import shuffle
 from h2o.estimators.deeplearning import H2ODeepLearningEstimator
 from h2o.grid.grid_search import H2OGridSearch
+
 
 class Test_deeplearning_grid_search:
     """
@@ -25,25 +23,23 @@ class Test_deeplearning_grid_search:
     performed here.
 
     Test Descriptions:
-    test_deeplearning_grid_search_over_params performs the following:
         a. grab all truely griddable parameters and randomly or manually set the parameter values.
         b. Next, build H2O deeplearning models using grid search.  Count and make sure models
            are only built for hyper-parameters set to legal values.  No model is built for bad hyper-parameters
            values.  We should instead get a warning/error message printed out.
         c. For each model built using grid search, we will extract the parameters used in building
-           that model and manually build a H2O deeplearning model.  MSEs are calculated from a test set
-           to compare the performance of grid search model and our manually built model.  If their MSEs
-           are close, declare test success.  Otherwise, declare test failure.
+           that model and manually build a H2O deeplearning model.  Training metrics are calculated from the
+           gridsearch model and the manually built model.  If their metrics
+           differ by too much, print a warning message but don't fail the test.
         d. we will check and make sure the models are built within the max_runtime_secs time limit that was set
-           for it as well.  If max_runtime_secs was exceeded, declare test failure as well.
+           for it as well.  If max_runtime_secs was exceeded, declare test failure.
 
     Note that for hyper-parameters containing all legal parameter names and parameter value lists with legal
     and illegal values, grid-models should be built for all combinations of legal parameter values.  For
     illegal parameter values, a warning/error message should be printed out to warn the user but the
-    program should not throw an exception;
+    program should not throw an exception.
 
-    We will re-use the dataset generation methods for GLM.  There will be two type of datasets, one for regression and
-    one for classification.
+    We will re-use the dataset generation methods for GLM.
     """
 
     # parameters set by users, change with care
@@ -141,24 +137,11 @@ class Test_deeplearning_grid_search:
     def setup_data(self):
         """
         This function performs all initializations necessary:
-        1. generates all the random parameter values for our dynamic tests like the Gaussian
-        noise std, column count and row count for training/test data sets.
-        2. randomly choose the distribution family (gaussian, binomial, multinomial)
-        to test.
-        3. with the chosen distribution family, generate the appropriate data sets
-        4. load the data sets and set the training set indices and response column index
+        load the data sets and set the training set indices and response column index
         """
 
         # create and clean out the sandbox directory first
         self.sandbox_dir = pyunit_utils.make_Rsandbox_dir(self.current_dir, self.test_name, True)
-
-        #  DEBUGGING setup_data, remember to comment them out once done.
-        # self.max_real_number = 1
-        # self.max_int_number = 1
-        # end DEBUGGING
-
-        # This is used to generate dataset for regression or classification.  Nothing to do
-        # with setting the distribution family in this case
 
         # preload datasets
         self.training1_data = h2o.import_file(path=pyunit_utils.locate(self.training1_filename))
@@ -241,13 +224,13 @@ class Test_deeplearning_grid_search:
             self.hyper_params["epochs"] = [random.randint(self.min_int_val, self.max_int_val) for p in
                                            range(0, self.max_int_number)]
 
-        # generate a new final_hyper_params which only takes a subset of all griddable parameters while
+        # generate a new final_hyper_params which only takes a subset of all griddable parameters
         [self.possible_number_models, self.final_hyper_params] = \
             pyunit_utils.check_and_count_models(self.hyper_params, self.params_zero_one, self.params_more_than_zero,
                                                 self.params_more_than_one, self.params_zero_positive,
                                                 self.max_grid_model)
-        #
-        # # must add max_runtime_secs to restrict unit test run time and as a promise to Arno to test for this
+
+        # must add max_runtime_secs to restrict unit test run time and as a promise to Arno to test for this
         if ("max_runtime_secs" not in list(self.final_hyper_params)) and \
                 ("max_runtime_secs" in list(self.hyper_params)):
             self.final_hyper_params["max_runtime_secs"] = self.hyper_params["max_runtime_secs"]
@@ -262,46 +245,18 @@ class Test_deeplearning_grid_search:
         pyunit_utils.write_hyper_parameters_json(self.current_dir, self.sandbox_dir, self.json_filename,
                                                  self.final_hyper_params)
 
-    def tear_down(self):
-        """
-        This function performs teardown after the dynamic test is completed.  If all tests
-        passed, it will delete all data sets generated since they can be quite large.  It
-        will move the training/validation/test data sets into a Rsandbox directory so that
-        we can re-run the failed test.
-        """
-
-        if self.test_failed:    # some tests have failed.  Need to save data sets for later re-runs
-            # create Rsandbox directory to keep data sets and weight information
-            self.sandbox_dir = pyunit_utils.make_Rsandbox_dir(self.current_dir, self.test_name, True)
-
-            # Do not want to save all data sets.  Only save data sets that are needed for failed tests
-            pyunit_utils.move_files(self.sandbox_dir, self.training1_data_file, self.training1_filename)
-
-            # write out the jenkins job info into log files.
-            json_file = os.path.join(self.sandbox_dir, self.json_filename)
-
-            with open(json_file,'wb') as test_file:
-                json.dump(self.hyper_params, test_file)
-        else:   # all tests have passed.  Delete sandbox if if was not wiped before
-            pyunit_utils.make_Rsandbox_dir(self.current_dir, self.test_name, False)
-
-        # remove any csv files left in test directory
-        pyunit_utils.remove_csv_files(self.current_dir, ".csv")
-        pyunit_utils.remove_csv_files(self.current_dir, ".json")
-
     def test_deeplearning_grid_search_over_params(self):
         """
-        test_deeplearning_grid_search_over_params: test for condition 1 and performs the following:
-        a. grab all truely griddable parameters and randomly or manually set the parameter values.
-        b. Next, build H2O deeplearning models using grid search.  Count and make sure models
+        test_deeplearning_grid_search_over_params performs the following:
+        a. build H2O deeplearning models using grid search.  Count and make sure models
            are only built for hyper-parameters set to legal values.  No model is built for bad hyper-parameters
            values.  We should instead get a warning/error message printed out.
         c. For each model built using grid search, we will extract the parameters used in building
-           that model and manually build a H2O deeplearning model.  MSEs are calculated from a test set
-           to compare the performance of grid search model and our manually built model.  If their MSEs
-           are close, declare test success.  Otherwise, declare test failure.
+           that model and manually build a H2O deeplearning model.  Training metrics are calculated from the
+           gridsearch model and the manually built model.  If their metrics
+           differ by too much, print a warning message but don't fail the test.
         d. we will check and make sure the models are built within the max_runtime_secs time limit that was set
-           for it as well.  If max_runtime_secs was exceeded, declare test failure as well.
+           for it as well.  If max_runtime_secs was exceeded, declare test failure.
         """
 
         print("*******************************************************************************************")
@@ -371,7 +326,7 @@ class Test_deeplearning_grid_search:
                     # make sure manual model was provided the same max_runtime_secs as the grid model
                     each_model_runtime = pyunit_utils.find_grid_runtime([each_model])
 
-                    manual_model = H2OGradientBoostingEstimator(**params_list)
+                    manual_model = H2ODeepLearningEstimator(**params_list)
                     manual_model.train(x=self.x_indices, y=self.y_index, training_frame=self.training1_data,
                                        **model_params)
 
@@ -392,23 +347,22 @@ class Test_deeplearning_grid_search:
                     true_run_time_limits += max_runtime
 
                     # compute and compare test metrics between the two models
-                    test_grid_model_metrics = each_model.model_performance()._metric_json[self.training_metric]
-                    test_manual_model_metrics = manual_model.model_performance()._metric_json[self.training_metric]
+                    grid_model_metrics = each_model.model_performance()._metric_json[self.training_metric]
+                    manual_model_metrics = manual_model.model_performance()._metric_json[self.training_metric]
 
                     # just compare the mse in this case within tolerance:
-                    if (abs(model_runtime - each_model_runtime) < self.allowed_runtime_diff) and \
-                            (abs(test_grid_model_metrics - test_manual_model_metrics) > self.allowed_diff):
-#                        self.test_failed += 1             # count total number of tests that have failed
+                    if abs(grid_model_metrics - manual_model_metrics)/grid_model_metrics > self.allowed_diff:
                         print("test_deeplearning_grid_search_over_params for deeplearning warning: grid search "
                               "model metric ({0}) and manually built H2O model metric ({1}) differ too much"
-                              "!".format(test_grid_model_metrics, test_manual_model_metrics))
+                              "!".format(grid_model_metrics, manual_model_metrics))
 
                 total_run_time_limits = max(total_run_time_limits, true_run_time_limits) * (1+self.extra_time_fraction)
 
                 # make sure the max_runtime_secs is working to restrict model built time
                 if not(manual_run_runtime <= total_run_time_limits):
                     self.test_failed += 1
-                    print("test_deeplearning_grid_search_over_params for deeplearning failed: time taken to manually build models is {0}."
+                    print("test_deeplearning_grid_search_over_params for deeplearning failed: time taken to "
+                          "manually build models is {0}."
                           "  Maximum allowed time is {1}".format(manual_run_runtime, total_run_time_limits))
                 else:
                     print("time taken to manually build all models is {0}. Maximum allowed time is "
@@ -418,7 +372,8 @@ class Test_deeplearning_grid_search:
                     print("test_deeplearning_grid_search_over_params for deeplearning has passed!")
         except:
             if self.possible_number_models > 0:
-                print("test_deeplearning_grid_search_over_params for deeplearning failed: exception was thrown for no reason.")
+                print("test_deeplearning_grid_search_over_params for deeplearning failed: exception was thrown for "
+                      "no reason.")
                 self.test_failed += 1
 
 
