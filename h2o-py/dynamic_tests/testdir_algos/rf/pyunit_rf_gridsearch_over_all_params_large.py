@@ -212,7 +212,7 @@ class Test_rf_grid_search:
 
     def test_rf_grid_search_over_params(self):
         """
-        test_rf_grid_search_over_params performs the following:
+        test_rf_gridsearch_sorting_metrics performs the following:
         a. build H2O random forest models using grid search.  Count and make sure models
            are only built for hyper-parameters set to legal values.  No model is built for bad hyper-parameters
            values.  We should instead get a warning/error message printed out.
@@ -224,7 +224,7 @@ class Test_rf_grid_search:
            for it as well.  If max_runtime_secs was exceeded, declare test failure.
         """
         print("*******************************************************************************************")
-        print("test_rf_grid_search_over_params for random forest ")
+        print("test_rf_gridsearch_sorting_metrics for random forest ")
         h2o.cluster_info()
 
         try:
@@ -241,7 +241,7 @@ class Test_rf_grid_search:
             # make sure the correct number of models are built by gridsearch
             if not (self.correct_model_number == self.possible_number_models):  # wrong grid model number
                 self.test_failed += 1
-                print("test_rf_grid_search_over_params for random forest failed: number of models built by "
+                print("test_rf_gridsearch_sorting_metrics for random forest failed: number of models built by "
                       "gridsearch does not equal to all possible combinations of hyper-parameters")
             else:
                 # add parameters into params_dict.  Use this to manually build model
@@ -303,7 +303,7 @@ class Test_rf_grid_search:
                     # just compare the mse in this case within tolerance:
                     if (each_model_runtime > 0) and \
                             (abs(grid_model_metrics - manual_model_metrics)/grid_model_metrics > self.allowed_diff):
-                        print("test_rf_grid_search_over_params for random forest warning: grid search model metric "
+                        print("test_rf_gridsearch_sorting_metrics for random forest warning: grid search model metric "
                               "({0}) and manually built H2O model metric ({1}) differ too "
                               "much.".format(grid_model_metrics, manual_model_metrics))
                         break
@@ -313,14 +313,14 @@ class Test_rf_grid_search:
                 # make sure the max_runtime_secs is working to restrict model built time
                 if not(manual_run_runtime <= total_run_time_limits):
                     self.test_failed += 1
-                    print("test_rf_grid_search_over_params for random forest failed: time taken to manually build models is {0}."
+                    print("test_rf_gridsearch_sorting_metrics for random forest failed: time taken to manually build models is {0}."
                           "  Maximum allowed time is {1}".format(manual_run_runtime, total_run_time_limits))
 
                 if self.test_failed == 0:
-                    print("test_rf_grid_search_over_params for random forest has passed!")
+                    print("test_rf_gridsearch_sorting_metrics for random forest has passed!")
         except:
             if self.possible_number_models > 0:
-                print("test_rf_grid_search_over_params for random forest failed: exception was thrown for no reason.")
+                print("test_rf_gridsearch_sorting_metrics for random forest failed: exception was thrown for no reason.")
                 self.test_failed += 1
 
 

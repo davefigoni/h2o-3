@@ -65,10 +65,10 @@ class Test_glm_grid_search:
 
     # parameters denoting filenames of interested that store training/validation/test data sets in csv format
     training1_filename = ["smalldata/gridsearch/gaussian_training1_set.csv",
-                          "smalldata/gridsearch/bionmial_training1_set.csv",
+                          "smalldata/gridsearch/binomial_training1_set.csv",
                           "smalldata/gridsearch/multinomial_training1_set.csv"]
     training2_filename = ["smalldata/gridsearch/gaussian_training2_set.csv",
-                          "smalldata/gridsearch/bionmial_training2_set.csv",
+                          "smalldata/gridsearch/binomial_training2_set.csv",
                           "smalldata/gridsearch/multinomial_training2_set.csv"]
 
     json_filename = "gridsearch_hyper_parameter_" + curr_time + ".json"
