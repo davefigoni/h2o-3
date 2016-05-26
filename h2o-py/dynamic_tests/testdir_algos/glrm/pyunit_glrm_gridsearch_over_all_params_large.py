@@ -45,7 +45,7 @@ class Test_glrm_grid_search:
     """
 
     # parameters set by users, change with care
-    max_grid_model = 150           # maximum number of grid models generated before adding max_runtime_secs
+    max_grid_model = 100           # maximum number of grid models generated before adding max_runtime_secs
 
     curr_time = str(round(time.time()))     # store current timestamp, used as part of filenames.
 
