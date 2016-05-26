@@ -57,12 +57,12 @@ class Test_PCA_grid_search:
 
     # following parameters are used to generate hyper-parameters
     max_int_val = 10            # maximum size of random integer values
-    min_int_val = -10           # minimum size of random integer values
-    max_int_number = 5          # maximum number of integer random grid values to generate
+    min_int_val = -2           # minimum size of random integer values
+    max_int_number = 3          # maximum number of integer random grid values to generate
 
     max_real_val = 1            # maximum size of random float values
-    min_real_val = -1           # minimum size of random float values
-    max_real_number = 5         # maximum number of real grid values to generate
+    min_real_val = -0.1           # minimum size of random float values
+    max_real_number = 3         # maximum number of real grid values to generate
 
     time_scale = 2              # maximum runtime scale
     max_iter_scale = 10         # scale the maximum number of iterations to be 100 maximum
@@ -180,6 +180,12 @@ class Test_PCA_grid_search:
             self.final_hyper_params["max_runtime_secs"] = self.hyper_params["max_runtime_secs"]
             len_good_time = len([x for x in self.hyper_params["max_runtime_secs"] if (x >= 0)])
             self.possible_number_models = self.possible_number_models*len_good_time
+
+        # must include k in hyper-parameters
+        if ('k' not in list(self.final_hyper_params)) and ('k' in list(self.hyper_params)):
+            self.final_hyper_params["k"] = self.hyper_params["k"]
+            len_good_k = len([x for x in self.hyper_params["k"] if (x > 0)])
+            self.possible_number_models = self.possible_number_models*len_good_k
 
         # write out the hyper-parameters used into json files.
         pyunit_utils.write_hyper_parameters_json(self.current_dir, self.sandbox_dir, self.json_filename,
