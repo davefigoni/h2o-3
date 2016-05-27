@@ -185,8 +185,13 @@ class Test_kmeans_grid_search:
             len_good_time = len([x for x in self.hyper_params["max_runtime_secs"] if (x >= 0)])
             self.possible_number_models = self.possible_number_models*len_good_time
 
-        if "fold_assignment" in list(self.final_hyper_params):      # stratified is illegal here
-            self.possible_number_models = self.possible_number_models * 0.75
+        if ("k" not in list(self.final_hyper_params)) and ("k" in list(self.hyper_params)):
+            self.final_hyper_params["k"] = self.hyper_params["k"]
+            len_good_k = len([x for x in self.hyper_params["k"] if (x > 0)])
+            self.possible_number_models = self.possible_number_models * len_good_k
+
+        # if "fold_assignment" in list(self.final_hyper_params):      # stratified is illegal here
+        #     self.possible_number_models = self.possible_number_models * 0.75
 
         # write out the hyper-parameters used into json files.
         pyunit_utils.write_hyper_parameters_json(self.current_dir, self.sandbox_dir, self.json_filename,
