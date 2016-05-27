@@ -100,7 +100,7 @@ class Test_naivebayes_grid_search:
     params_zero_one = ['min_prob', 'eps_prob']
     params_more_than_zero = []
     params_more_than_one = []
-    params_zero_positive = ['max_runtime_secs']       # >= 0
+    params_zero_positive = ['max_runtime_secs', 'laplace']       # >= 0
 
     final_hyper_params = dict()     # store the final hyper-parameters that we are going to use
     gridable_parameters = []    # store griddable parameter names
