@@ -113,7 +113,8 @@ class Test_gbm_grid_search:
                        'sample_rate']
     params_more_than_zero = ['min_rows', 'max_depth',  "max_after_balance_size"]
     params_more_than_one = ['nbins_cats', 'nbins']
-    params_zero_positive = ['max_runtime_secs', 'stopping_rounds', 'ntrees', 'stopping_tolerance']       # >= 0
+    params_zero_positive = ['max_runtime_secs', 'stopping_rounds', 'ntrees', 'stopping_tolerance',
+                            'min_split_improvement']       # >= 0
 
     final_hyper_params = dict()     # store the final hyper-parameters that we are going to use
     gridable_parameters = []    # store griddable parameter names

@@ -2492,7 +2492,7 @@ def check_and_count_models(hyper_params, params_zero_one, params_more_than_zero,
         else:
             param_len = len(hyper_params[param])
 
-        if (param_len > 0) and ((total_model*param_len) <= max_grid_model):
+        if (param_len >= 0) and ((total_model*param_len) <= max_grid_model):
             total_model *= param_len
             final_hyper_params[param] = hyper_params[param]
         elif (total_model*param_len) > max_grid_model:
