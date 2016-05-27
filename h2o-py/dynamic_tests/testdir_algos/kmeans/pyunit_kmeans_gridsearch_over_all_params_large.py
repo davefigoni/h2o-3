@@ -90,9 +90,9 @@ class Test_kmeans_grid_search:
     # denote legal values for certain parameters.  May include other parameters for other algos.
     params_zero_one = ['col_sample_rate', 'learn_rate_annealing', 'learn_rate', 'col_sample_rate_per_tree',
                        'sample_rate']
-    params_more_than_zero = ['k', 'max_iterations']
+    params_more_than_zero = ['k']
     params_more_than_one = ['nbins_cats', 'nbins']
-    params_zero_positive = ['max_runtime_secs', 'stopping_rounds', 'stopping_tolerance']       # >= 0
+    params_zero_positive = ['max_runtime_secs', 'stopping_rounds', 'stopping_tolerance', 'max_iterations']       # >= 0
 
     final_hyper_params = dict()     # store the final hyper-parameters that we are going to use
     gridable_parameters = []    # store griddable parameter names
