@@ -1,5 +1,6 @@
 package water;
 
+import water.fvec.Chunk;
 import water.fvec.ChunkUtils;
 import water.fvec.Frame;
 import water.fvec.NewChunk;
@@ -19,6 +20,7 @@ public class ExternalFrameHandler {
     public static final int CREATE_NEW_CHUNK = 1;
     public static final int ADD_TO_FRAME = 2;
     public static final int CLOSE_NEW_CHUNK = 3;
+    public static final int DOWNLOAD_DATA_FOR_CHUNK = 4;
 
     public static final int TYPE_NUM = 1;
     public static final int TYPE_STR = 2;
@@ -59,10 +61,25 @@ public class ExternalFrameHandler {
                 case CLOSE_NEW_CHUNK: // Close new chunks
                     ChunkUtils.closeNewChunks(nchnk);
                     break;
+                case DOWNLOAD_DATA_FOR_CHUNK: // send data from the chunk to the node from which this request came
+                    String frame_key_to_query = ab.getStr();
+                    int chunk_id_to_query = ab.getInt();
+                    download(ab, frame_key_to_query, chunk_id_to_query);
+                    break;
             }
         } while (requestType != CLOSE_NEW_CHUNK);
     }
 
+    private void download(AutoBuffer ab, String frame_key, int chunk_id){
+        Frame fr = DKV.getGet(frame_key);
+        Chunk[] chunks = ChunkUtils.getChunks(fr, chunk_id);
+        // clear the AutoBuffer and start sending back the data
+        ab.clearForWriting(H2O.ATOMIC_PRIORITY);
+        ab.putInt(chunks[0]._len); // num of rows
+
+        // start sending data
+
+    }
     public void store(String string, int columnNum) {
         // Helper to hold H2O string
         BufferedString valStr = new BufferedString();
